@@ -169,7 +169,10 @@ function sendRequest(base64Data){
 				cache: false,
 				async: true,
 				crossDomain: true,
-				contentType: false, // This allows the browser to set the Content-Type header automatically (important for boundary setting)
+				headers: {
+					'Content-Type': 'application/json',
+					'Access-Control-Allow-Origin':'*'
+				},
 				data:JSON.stringify({image:base64Data}),
 				success: function(res){
 					$(".res-part").html("");
@@ -189,53 +192,40 @@ function sendRequest(base64Data){
 }
 
 $(document).ready(function(){
-    $("#loading").hide();
+	$("#loading").hide();
 
-    $('#send').click(function(evt){
-        var formData = new FormData();
-        var fileInput = document.getElementById('fileinput');
-        if(fileInput.files[0]) { // Check if any file is uploaded
-            formData.append("file", fileInput.files[0]);
-
-            $("#loading").show();
-            $.ajax({
-                url: $("#url").val(),
-                type: "POST",
-                data: formData,
-                processData: false, // Prevent jQuery from automatically transforming the data into a query string
-                contentType: false, // Let the browser set the Content-Type
-                cache: false,
-                async: true,
-                success: function(res){
-                    $(".res-part").html("");
-                    $(".res-part2").html("");
-                    $(".res-part").html("<pre>" + JSON.stringify(res, undefined, 2) + "</pre>");
-                    $("#loading").hide();
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    console.log('AJAX error:', textStatus, errorThrown);
-                    $("#loading").hide();
-                }
-            });
-        }
+	$('#send').click(function(evt){
+		sendRequest(base_data);
     });
 
     $('#uload').click(function(evt) {
-        $('#fileinput').click(); // Trigger file input
+        $('#fileinput').focus().trigger('click');
     });
-
-    $("#fileinput").change(function(){
-        if (this.files && this.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                $('#photo').attr('src', e.target.result).show();
-                $('#video').hide();
-            };
-            reader.readAsDataURL(this.files[0]);
-        }
-    });
+	$("#fileinput").change(function(){
+		if (this.files && this.files[0]){
+			var reader = new FileReader();
+			reader.onload = function (e){
+				var url = e.target.result;
+				var img = new Image();
+				img.crossOrigin = 'Anonymous';
+				img.onload = function(){
+					var canvas = document.createElement('CANVAS');
+					var ctx = canvas.getContext('2d');
+					canvas.height = this.height;
+					canvas.width = this.width;
+					ctx.drawImage(this, 0, 0);
+					base_data = canvas.toDataURL('image/jpeg', 1.0).replace(/^data:image.+;base64,/, '');
+					canvas = null;
+				};
+				img.src = url;
+				$('#photo').attr('src', url);
+				$('#photo').show();
+				$('#video').hide();
+			}
+			reader.readAsDataURL(this.files[0]);
+		}
+	});
 });
-
 
 </script>
 </body>
