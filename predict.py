@@ -9,28 +9,36 @@ class DogCatClassifier:
     def __init__(self, filename):
         self.filename = filename
 
+    def preprocess_image(self):
+        image_path = self.filename
+        # Load the image
+        img = load_img(image_path, target_size=(64, 64))
+        # Convert the image to a numpy array
+        img_array = img_to_array(img)
+        # Expand dimensions to match the model's input format (adding batch size dimension)
+        img_array = np.expand_dims(img_array, axis=0)
+        # Normalize pixel values if your model expects normalization
+        img_array /= 255.0
+        print(img_array.shape)
+        return img_array
+
     def prediction_dog_cat(self):
         # Load model
-        model = load_model('model.h5')
-
-        # Load and preprocess the image
-        imagename = self.filename
-        test_image = load_img(imagename, target_size=(64, 64))
-        test_image = img_to_array(test_image)
-        test_image = np.expand_dims(test_image, axis=0)
-        test_image = test_image / 255.0  # Rescale pixel values to the range [0, 1] as done during training
+        model = load_model('model_new.h5')
+        processed_image = self.preprocess_image()
 
         # Predict the class (0 for cat, 1 for dog)
-        result = model.predict(test_image)
+        result = model.predict(processed_image)
 
         if result[0][0] > 0.5:
             prediction = 'dog'
         else:
             prediction = 'cat'
-
         return [{"image": prediction}]
+    
 
 # Example usage:
-# classifier = DogCatClassifier('path/to/your/image.jpg')
+# image_path = 'cat.jpg'
+# classifier = DogCatClassifier(image_path)
 # prediction_result = classifier.prediction_dog_cat()
 # print(prediction_result)
